@@ -1,4 +1,4 @@
-/*----------------------------------------------------------------------------
+ï»¿/*----------------------------------------------------------------------------
  *      R T L  -  C A N   D r i v e r
  *----------------------------------------------------------------------------
  *      Name:    CAN_Hw.c
@@ -75,11 +75,17 @@ static CAN_ERROR CAN_hw_set_baudrate (U32 ctrl, U32 baudrate)  {
      appropriate bit timing                                                  */
   if (baudrate <= 500000)  {
     brp  = (brp / 18) / baudrate;
-                                                                          
+
     /* Load the baudrate registers BTR                                       */
     /* so that sample point is at about 72% bit time from bit start          */
-    /* TSEG1 = 12, TSEG2 = 5, SJW = 4 => 1 CAN bit = 18 TQ, sample at 72%    */
-    CAN_set_timing( 12, 5, 4, brp);
+    if (baudrate <= 10000) {
+        /* TSEG1 = 3, TSEG2 = 2, SJW = 4 => 1 CAN bit = 18 TQ, sample at 72%    */
+        CAN_set_timing(3, 2, 4, brp*3);
+    }
+    else {
+        /* TSEG1 = 12, TSEG2 = 5, SJW = 4 => 1 CAN bit = 18 TQ, sample at 72%    */
+        CAN_set_timing(12, 5, 4, brp);
+    }
   }  else if (baudrate <= 1000000)  {
     brp  = (brp / 9) / baudrate;
                                                                           
@@ -168,7 +174,7 @@ U32 gCtrl;
 U32 gBaudrate;
 CAN_ERROR CAN_hw_init (U32 ctrl, U32 baudrate)
 {
-//Ğì³É
+//å…¶ëƒ¥
 #if CAN_ART_Enable  
 								 
   	CAN->MCR = CAN_MCR_INRQ;
@@ -191,7 +197,7 @@ CAN_ERROR CAN_hw_init (U32 ctrl, U32 baudrate)
 
 CAN_ERROR CAN_hw_init_ex	(U32 ctrl, U32 baudrate, U8 bArt)
 {
-	//Ğì³É
+	//å…¶ëƒ¥
 	if(bArt > 0)
 	{
 		CAN->MCR = CAN_MCR_INRQ;
@@ -215,7 +221,7 @@ CAN_ERROR CAN_hw_init_ex	(U32 ctrl, U32 baudrate, U8 bArt)
 
 CAN_ERROR CAN_hw_reinit(U32 ctrl, U32 baudrate)
 {
-	//CANÇ¿ĞĞ¸´Î»
+	//CANí“»ï¤‰ë¦¿è²«
 	CAN->MCR = CAN_MCR_RESET;
 	CAN->MCR &= ~CAN_MCR_SLEEP;
 	
@@ -224,7 +230,7 @@ CAN_ERROR CAN_hw_reinit(U32 ctrl, U32 baudrate)
 
 CAN_ERROR CAN_hw_reinit_ex(U32 ctrl, U32 baudrate, U8 bArt)
 {
-	//CANÇ¿ĞĞ¸´Î»
+	//CANí“»ï¤‰ë¦¿è²«
 	CAN->MCR = CAN_MCR_RESET;
 	CAN->MCR &= ~CAN_MCR_SLEEP;
 	
@@ -247,7 +253,7 @@ CAN_ERROR CAN_hw_start (U32 ctrl)
 {
 
   CAN->MCR &= ~CAN_MCR_INRQ;          /* normal operating mode, reset INRQ   */
- //Ğì³É
+ //å…¶ëƒ¥
 #if CAN_ABOM_Enable
   CAN->MCR |= CAN_MCR_ABOM;
 #endif
@@ -510,7 +516,7 @@ CAN_ERROR CAN_hw_rx_object_mask (U32 ctrl, U32 ch, U32 id, U32 mask, CAN_FORMAT 
 }
 
 
-//´øMASKºÍINDEXµÄFILTER
+//ë˜MASKëµ¨INDEXë¨FILTER
 CAN_ERROR CAN_hw_rx_object_mask_idx (U32 ctrl, U32 ch, U32 id, U32 mask, U8 idx, U8 enable, CAN_FORMAT format)  
 {
   U32 CAN_msgId     = 0;
@@ -630,26 +636,26 @@ void USB_LP_CAN_RX0_IRQHandler (void) {
 
 /*--------------------------- CAN_SetErrCallBack ------------------------------
  *
- *	ÉèÖÃ´íÎó´¦Àí»Øµ÷º¯Êı
+ *	î‡é›¶ëŒ„è½ë‡¹ì¿ì€¼ë”§ë³€é‘’
  *
- *  ²ÎÊı:  ceh£º´íÎó´¦Àíº¯ÊıÖ¸Õë
+ *  ê½é‘’:  cehï¼šëŒ„è½ë‡¹ì¿ë³€é‘’ï¥Ÿæ¿¾
  *---------------------------------------------------------------------------*/
 static CANERRHANDLER gCanErrHandler = NULL;
 void CAN_err_config(CANERRHANDLER ceh)
 {
-	//Ğì³É¸Ä¶¯
+	//å…¶ëƒ¥ë§£ë•¡
 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	gCanErrHandler = ceh;
 	
-	//Ğì³É
+	//å…¶ëƒ¥
   NVIC_InitStructure.NVIC_IRQChannel = CAN_SCE_IRQChannel;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	
-	CAN_ITConfig(CAN_IT_ERR|CAN_IT_EWG|CAN_IT_EPV|CAN_IT_BOF, ENABLE);		//´íÎó¾¯¸æÖĞ¶ÏÆÁ±Î|´íÎó±»¶¯ÖĞ¶ÏÆÁ±Î|ÉÏ´Î´íÎóºÅÖĞ¶ÏÆÁ±Î|´íÎóÖĞ¶ÏÆÁ±Î
+	CAN_ITConfig(CAN_IT_ERR|CAN_IT_EWG|CAN_IT_EPV|CAN_IT_BOF, ENABLE);		//ëŒ„è½ì’¸ë©©æ«“ë™¤íŒê·|ëŒ„è½êµ³ë•¡æ«“ë™¤íŒê·|î€®ëŠ´ëŒ„è½ëµ€æ«“ë™¤íŒê·|ëŒ„è½æ«“ë™¤íŒê·
 }
 
 void CAN_SCE_IRQHandler(void)
